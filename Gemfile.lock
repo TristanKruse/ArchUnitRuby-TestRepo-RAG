@@ -1,13 +1,13 @@
 PATH
-  remote: .
-  specs:
-    archunit_ruby_test_repo_rag (0.1.0)
-
-PATH
-  remote: C:/Users/trika/Documents/ArchUnitEverything/ArchUnitRuby
+  remote: ../ArchUnitRuby
   specs:
     archunit (0.0.1)
       prism (>= 1.0, < 2.0)
+
+PATH
+  remote: .
+  specs:
+    archunit_ruby_test_repo_rag (0.1.0)
 
 GEM
   remote: https://rubygems.org/
