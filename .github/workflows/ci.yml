@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Ruby ${{ matrix.ruby }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            ruby: "3.3"
+          - os: ubuntu-latest
+            ruby: "4.0"
+          - os: windows-latest
+            ruby: "4.0"
+
+    steps:
+      - name: Check out the fixture
+        uses: actions/checkout@v7
+        with:
+          path: ArchUnitRuby-TestRepo-RAG
+
+      - name: Check out ArchUnitRuby
+        uses: actions/checkout@v7
+        with:
+          repository: LukasNiessen/ArchUnitRuby
+          path: ArchUnitRuby
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          working-directory: ArchUnitRuby-TestRepo-RAG
+
+      - name: Run application, architecture, and lint tests
+        working-directory: ArchUnitRuby-TestRepo-RAG
+        run: bundle exec rake

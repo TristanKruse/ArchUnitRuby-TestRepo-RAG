@@ -18,9 +18,9 @@ Two source files intentionally violate that architecture:
 - `lib/rag_pipeline/api/bad_shortcut.rb` reaches directly into `retrieval`.
 - `lib/rag_pipeline/shared/leaky.rb` reaches upward into `services`.
 
-The first executable architecture spec covers project discovery and source enumeration. As the
-ArchUnitRuby fluent API grows, this same repository will gain rules that detect the intentional
-violations end to end.
+Its executable architecture specs cover project discovery, source enumeration, dependency
+extraction, internal/external classification, and both intentional violations. As the ArchUnitRuby
+fluent API grows, this repository will gain fluent rules that report those violations directly.
 
 Run it next to a checkout named `ArchUnitRuby`:
 
@@ -28,3 +28,6 @@ Run it next to a checkout named `ArchUnitRuby`:
 bundle install
 bundle exec rake
 ```
+
+CI checks the fixture against the current ArchUnitRuby `main` branch on Ruby 3.3 and 4.0, including
+Windows.

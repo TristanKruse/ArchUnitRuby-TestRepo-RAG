@@ -1,3 +1,4 @@
 /.bundle/
+/.rubocop_cache/
 /.rspec_status
 /vendor/bundle/
