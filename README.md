@@ -23,8 +23,9 @@ Two source files intentionally violate that architecture:
 
 Its executable architecture specs cover project discovery, source enumeration, dependency
 extraction, ignore directives, internal/external classification, built-in edge mappers, layer
-projection, cycle detection, and both intentional violations. As the ArchUnitRuby fluent API grows,
-this repository will gain fluent rules that report those violations directly.
+projection, cycle detection, immutable file scopes/moods, and both intentional violations. As the
+ArchUnitRuby fluent API grows, this repository will gain fluent rules that report those violations
+directly.
 
 Run it next to a checkout named `ArchUnitRuby`:
 

@@ -142,4 +142,15 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
   it 'has no internal dependency cycles' do
     expect(ArchUnit::Common::Projection.project_internal_cycles(edges)).to be_empty
   end
+
+  it 'builds reusable immutable file scopes in both moods' do
+    base = ArchUnit.files(fixture_root)
+                   .in_folder('lib/rag_pipeline/**')
+                   .with_name('*.rb')
+
+    expect(base.should).to have_attributes(project_locator: fixture_root.to_s, negated?: false)
+    expect(base.should_not).to have_attributes(project_locator: fixture_root.to_s, negated?: true)
+    expect(base.filters.length).to eq(2)
+    expect(base).to be_frozen
+  end
 end
