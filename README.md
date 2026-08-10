@@ -24,8 +24,9 @@ Two source files intentionally violate that architecture:
 Its executable architecture specs cover project discovery, source enumeration, dependency
 extraction, ignore directives, internal/external classification, built-in edge mappers, layer
 projection, cycle detection, immutable file scopes/moods, executable cycle/name/folder/path rules,
-internal/external dependency rules, and both intentional violations. Its fluent rules now report
-those violations directly as structured data.
+internal/external dependency rules, custom `FileInfo` predicates, the universal empty-test guard,
+and both intentional violations. Its fluent rules report those violations directly as structured
+data.
 
 Run it next to a checkout named `ArchUnitRuby`:
 

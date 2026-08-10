@@ -232,4 +232,43 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
       )
     )
   end
+
+  it 'evaluates custom FileInfo predicates and guards empty selections' do
+    frozen_source_rule = ArchUnit.files(fixture_root)
+                                 .in_folder('lib/rag_pipeline/**')
+                                 .should.adhere_to(
+                                   lambda do |file|
+                                     file.content.start_with?('# frozen_string_literal: true')
+                                   end,
+                                   'Ruby sources must freeze string literals'
+                                 )
+    custom_violation_rule = ArchUnit.files(fixture_root)
+                                    .with_name('leaky.rb')
+                                    .should.adhere_to(
+                                      ->(file) { file.name == 'config' },
+                                      'shared files must be configuration'
+                                    )
+    empty_rule = ArchUnit.files(fixture_root)
+                         .in_folder('missing/**')
+                         .should.adhere_to(->(_file) { true }, 'must exist')
+
+    expect(frozen_source_rule.check).to be_empty
+    expect(custom_violation_rule.check).to contain_exactly(
+      an_instance_of(ArchUnit::CustomFileViolation).and(
+        have_attributes(
+          message: 'shared files must be configuration',
+          file_info: have_attributes(
+            path: 'lib/rag_pipeline/shared/leaky.rb',
+            name: 'leaky',
+            extension: '.rb',
+            directory: 'lib/rag_pipeline/shared'
+          )
+        )
+      )
+    )
+    expect(empty_rule.check).to contain_exactly(an_instance_of(ArchUnit::EmptyTestViolation))
+    expect(
+      empty_rule.check(ArchUnit::CheckOptions.new(allow_empty_tests: true))
+    ).to be_empty
+  end
 end
