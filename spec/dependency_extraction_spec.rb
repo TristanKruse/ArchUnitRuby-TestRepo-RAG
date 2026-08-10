@@ -271,4 +271,30 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
       empty_rule.check(ArchUnit::CheckOptions.new(allow_empty_tests: true))
     ).to be_empty
   end
+
+  it 'formats and asserts real architecture results without framework-specific setup' do
+    passing = ArchUnit.files(fixture_root)
+                      .in_folder('lib/rag_pipeline/**')
+                      .should.have_no_cycles
+    failing = ArchUnit.files(fixture_root)
+                      .in_folder('lib/rag_pipeline/api')
+                      .with_name('bad_shortcut.rb')
+                      .should_not.depend_on_files
+                      .in_folder('lib/rag_pipeline/retrieval')
+
+    expect(ArchUnit.assert_passes(passing)).to be_nil
+    expect { ArchUnit.assert_passes(failing) }.to raise_error(
+      ArchUnit::AssertionFailure,
+      /Found 2 architecture violations:.*File dependency violation/m
+    )
+
+    result = ArchUnit::ResultFactory.from_violations(failing.check, color: false)
+    expect(result).to be_failed
+    expect(result.message).to include(
+      "File 'lib/rag_pipeline/api/bad_shortcut.rb' depends on forbidden file " \
+      "'lib/rag_pipeline/retrieval/embedder.rb'.",
+      "File 'lib/rag_pipeline/api/bad_shortcut.rb' depends on forbidden file " \
+      "'lib/rag_pipeline/retrieval/vector_store.rb'."
+    )
+  end
 end
