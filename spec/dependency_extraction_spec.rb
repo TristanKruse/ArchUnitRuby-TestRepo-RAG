@@ -181,6 +181,48 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     )
   end
 
+  it 'reports the deliberate forbidden dependency through the public slices API' do
+    rule = ArchUnit.project_slices(fixture_root)
+                   .defined_by('lib/rag_pipeline/(**)/')
+                   .should_not.contain_dependency('api', 'retrieval')
+
+    expect(rule.check).to contain_exactly(
+      have_attributes(
+        source_slice: 'api', target_slice: 'retrieval',
+        rule: :contain_dependency,
+        dependency: have_attributes(cumulated_edges: have_attributes(length: 2))
+      )
+    )
+  end
+
+  it 'validates the real graph against the checked-in PlantUML architecture' do
+    rule = ArchUnit.project_slices(fixture_root)
+                   .defined_by('lib/rag_pipeline/(**)/')
+                   .should
+                   .ignoring_external_slices
+                   .adhere_to_diagram_in_file(
+                     File.join(fixture_root, 'docs', 'architecture.puml')
+                   )
+
+    expect(rule.check.map { |violation| [violation.source_slice, violation.target_slice] })
+      .to contain_exactly(%w[api retrieval], %w[shared services])
+  end
+
+  it 'generates and exports the actual RAG slice diagram' do
+    slices = ArchUnit.project_slices(fixture_root).defined_by('lib/rag_pipeline/(**)/')
+    plantuml = slices.to_plantuml
+
+    expect(plantuml).to include(
+      'component [api]', 'component [services]',
+      '[api] --> [retrieval]', '[shared] --> [services]'
+    )
+    Dir.mktmpdir do |directory|
+      output = File.join(directory, 'nested', 'rag-architecture.puml')
+      expect(slices.export_as_plantuml(output)).to be_nil
+      expect(File.binread(output)).to eq(plantuml)
+    end
+  end
+
   it 'queries one immutable graph snapshot through all six report formats' do
     report = ArchUnit.project_graph(fixture_root)
                      .include_external_dependencies

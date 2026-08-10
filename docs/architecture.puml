@@ -1,0 +1,19 @@
+@startuml RAG Pipeline Architecture
+  component [api]
+  component [services]
+  component [retrieval]
+  component [llm]
+  component [models]
+  component [shared]
+
+  [api] --> [services]
+  [api] --> [models]
+  [services] --> [retrieval]
+  [services] --> [llm]
+  [services] --> [models]
+  [retrieval] --> [models]
+  [retrieval] --> [shared]
+  [llm] --> [models]
+  [llm] --> [shared]
+  [models] --> [shared]
+@enduml
