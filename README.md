@@ -9,7 +9,8 @@ codebase.
 The intended dependency flow is:
 
 ```text
-api -> services -> retrieval, llm, models
+api -> services, models
+services -> retrieval, llm, models
 retrieval -> models, shared
 llm -> models, shared
 models -> shared
@@ -25,8 +26,9 @@ Its executable architecture specs cover project discovery, source enumeration, d
 extraction, ignore directives, internal/external classification, built-in edge mappers, layer
 projection, cycle detection, immutable file scopes/moods, executable cycle/name/folder/path rules,
 internal/external dependency rules, custom `FileInfo` predicates, the universal empty-test guard,
-shared violation/result formatting, the framework-neutral assertion helper, and both intentional
-violations. Its fluent rules report and assert those violations directly.
+shared violation/result formatting, the framework-neutral assertion helper, the native RSpec
+matcher, a complete named-layer policy, and both intentional violations. Its fluent rules report
+and assert those violations directly.
 
 Run it next to a checkout named `ArchUnitRuby`:
 

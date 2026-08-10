@@ -25,6 +25,27 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     path[%r{\Alib/rag_pipeline/([^/]+)/}, 1]
   end
 
+  def rag_layer_policy
+    definitions = rag_layer_names.reduce(ArchUnit.layers(fixture_root)) do |rule, name|
+      rule.layer(name).defined_by_folder("lib/rag_pipeline/#{name}")
+    end
+    rag_layer_dependencies.reduce(definitions) do |rule, (source, targets)|
+      rule.where_layer(source).may_only_depend_on_layers(*targets)
+    end
+  end
+
+  def rag_layer_names
+    %w[api services retrieval llm models shared]
+  end
+
+  def rag_layer_dependencies
+    {
+      'api' => %w[services models], 'services' => %w[retrieval llm models],
+      'retrieval' => %w[models shared], 'llm' => %w[models shared],
+      'models' => %w[shared], 'shared' => []
+    }
+  end
+
   it 'extracts the intended dependencies between application layers' do
     expect(edges).to include_edge(
       source: 'lib/rag_pipeline/services/rag_service.rb',
@@ -123,6 +144,38 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
 
     expect(api_to_retrieval.cumulated_edges.length).to eq(2)
     expect(shared_to_services.cumulated_edges.length).to eq(1)
+  end
+
+  it 'enforces the complete named-layer policy and exposes every deliberate violation' do
+    rule = rag_layer_policy
+    violations = rule.check
+
+    expect(violations.map do |violation|
+      [
+        violation.source_layer,
+        violation.target_layer,
+        violation.dependency.source_label,
+        violation.dependency.target_label
+      ]
+    end).to contain_exactly(
+      [
+        'api', 'retrieval', 'lib/rag_pipeline/api/bad_shortcut.rb',
+        'lib/rag_pipeline/retrieval/embedder.rb'
+      ],
+      [
+        'api', 'retrieval', 'lib/rag_pipeline/api/bad_shortcut.rb',
+        'lib/rag_pipeline/retrieval/vector_store.rb'
+      ],
+      [
+        'shared', 'services', 'lib/rag_pipeline/shared/leaky.rb',
+        'lib/rag_pipeline/services/rag_service.rb'
+      ]
+    )
+    expect(rule).not_to pass
+    expect { expect(rule).to pass }.to raise_error(
+      RSpec::Expectations::ExpectationNotMetError,
+      /Found 3 architecture violations:.*Layer dependency violation/m
+    )
   end
 
   it 'partitions real dependencies through the built-in edge mappers' do
@@ -283,6 +336,8 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
                       .in_folder('lib/rag_pipeline/retrieval')
 
     expect(ArchUnit.assert_passes(passing)).to be_nil
+    expect(passing).to pass
+    expect(failing).not_to pass
     expect { ArchUnit.assert_passes(failing) }.to raise_error(
       ArchUnit::AssertionFailure,
       /Found 2 architecture violations:.*File dependency violation/m
