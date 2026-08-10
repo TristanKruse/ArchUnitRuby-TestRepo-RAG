@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'tmpdir'
+
 RSpec.describe 'ArchUnitRuby source metrics' do
   let(:fixture_root) { File.expand_path('..', __dir__).tr('\\', '/') }
   let(:service_scope) do
@@ -64,5 +66,61 @@ RSpec.describe 'ArchUnitRuby source metrics' do
 
     expect(measurement).to have_attributes(metric_name: 'member count', value: 6)
     expect(passing_rule.check).to be_empty
+  end
+
+  it 'enforces exact count, cohesion, distance, and custom metric thresholds' do
+    custom = service_scope.custom_metric(
+      'member count', 'RAG services should remain focused',
+      ->(class_info) { class_info.methods.length + class_info.fields.length }
+    )
+    rules = [
+      service_scope.count.method_count.should_be_below_or_equal(3),
+      service_scope.lcom.lcom4.should_be(1),
+      service_scope.distance.instability.should_be_above(0.5),
+      custom.should_be_above_or_equal(6),
+      service_scope.count.field_count.should_satisfy(
+        ->(value, class_info) { value == 3 && class_info.name.end_with?('RagService') }
+      )
+    ]
+
+    expect(rules).to all(be_a(ArchUnit::Checkable))
+    expect(rules.flat_map(&:check)).to be_empty
+    expect(service_scope.count.method_count.should_be_below(3).check).to contain_exactly(
+      have_attributes(
+        metric_name: :method_count, value: 3, threshold: 3, comparison: :below
+      )
+    )
+  end
+
+  it 'exports real scoped metrics and arbitrary summaries as offline HTML' do
+    Dir.mktmpdir do |root|
+      options = ArchUnit::MetricsExportOptions.new(
+        title: 'RAG Architecture Metrics', include_timestamp: false
+      )
+      reports = {
+        count: service_scope.count,
+        lcom: service_scope.lcom,
+        distance: service_scope.distance
+      }
+
+      reports.each do |name, builder|
+        output = File.join(root, name.to_s)
+        expect(builder.export_as_html(output, options)).to be_nil
+        identifier = if name == :distance
+                       'lib/rag_pipeline/services/rag_service.rb'
+                     else
+                       'RagPipeline::Services::RagService'
+                     end
+        expect(File.read("#{output}.html")).to include(
+          'RAG Architecture Metrics', identifier
+        )
+      end
+
+      summary = ArchUnit::MetricsExporter.export_as_html(
+        { 'RAG service member count' => 6 }, options
+      )
+      expect(summary).to include('RAG service member count', '>6<')
+      expect(summary).not_to include('Generated:')
+    end
   end
 end
