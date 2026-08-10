@@ -124,4 +124,22 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     expect(api_to_retrieval.cumulated_edges.length).to eq(2)
     expect(shared_to_services.cumulated_edges.length).to eq(1)
   end
+
+  it 'partitions real dependencies through the built-in edge mappers' do
+    internal = ArchUnit::Common::Projection.project_edges(
+      edges, ArchUnit::Common::Projection.per_internal_edge
+    )
+    external = ArchUnit::Common::Projection.project_edges(
+      edges, ArchUnit::Common::Projection.per_external_edge
+    )
+
+    expect(internal).not_to be_empty
+    expect(external).not_to be_empty
+    expect(internal.flat_map(&:cumulated_edges)).to all(have_attributes(external: false))
+    expect(external.flat_map(&:cumulated_edges)).to all(have_attributes(external: true))
+  end
+
+  it 'has no internal dependency cycles' do
+    expect(ArchUnit::Common::Projection.project_internal_cycles(edges)).to be_empty
+  end
 end
