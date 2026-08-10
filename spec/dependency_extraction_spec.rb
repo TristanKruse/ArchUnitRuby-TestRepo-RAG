@@ -184,4 +184,52 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
       )
     )
   end
+
+  it 'reports both deliberate internal dependency violations through fluent rules' do
+    api_rule = ArchUnit.files(fixture_root)
+                       .in_folder('lib/rag_pipeline/api')
+                       .with_name('bad_shortcut.rb')
+                       .should_not.depend_on_files
+                       .in_folder('lib/rag_pipeline/retrieval')
+    shared_rule = ArchUnit.files(fixture_root)
+                          .in_folder('lib/rag_pipeline/shared')
+                          .with_name('leaky.rb')
+                          .should_not.depend_on_files
+                          .in_folder('lib/rag_pipeline/services')
+
+    expect(api_rule.check.map { |violation| violation.dependency.target_label }).to contain_exactly(
+      'lib/rag_pipeline/retrieval/embedder.rb',
+      'lib/rag_pipeline/retrieval/vector_store.rb'
+    )
+    expect(shared_rule.check.map { |violation| violation.dependency.target_label }).to eq(
+      ['lib/rag_pipeline/services/rag_service.rb']
+    )
+    expect([*api_rule.check, *shared_rule.check]).to all(
+      be_a(ArchUnit::FileDependencyViolation).and(be_negated)
+    )
+  end
+
+  it 'enforces an external-module allowlist and blocklist against the fixture' do
+    allowed = ArchUnit.files(fixture_root)
+                      .in_folder('lib/rag_pipeline/retrieval')
+                      .should.depend_on_external_modules
+                      .matching('digest')
+    forbidden = ArchUnit.files(fixture_root)
+                        .in_folder('lib/rag_pipeline/retrieval')
+                        .should_not.depend_on_external_modules
+                        .matching('digest')
+
+    expect(allowed.check).to be_empty
+    expect(forbidden.check).to contain_exactly(
+      an_instance_of(ArchUnit::ExternalModuleDependencyViolation).and(
+        have_attributes(
+          dependency: have_attributes(
+            source_label: 'lib/rag_pipeline/retrieval/embedder.rb',
+            target_label: 'digest'
+          ),
+          negated?: true
+        )
+      )
+    )
+  end
 end
