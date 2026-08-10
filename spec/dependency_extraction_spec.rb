@@ -153,4 +153,35 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     expect(base.filters.length).to eq(2)
     expect(base).to be_frozen
   end
+
+  it 'executes cycle, filename, and location rules against the fixture' do
+    cycles = ArchUnit.files(fixture_root)
+                     .in_folder('lib/rag_pipeline/**')
+                     .should.have_no_cycles
+    service_names = ArchUnit.files(fixture_root)
+                            .in_folder('lib/rag_pipeline/services')
+                            .should.have_name('*_service.rb')
+    model_paths = ArchUnit.files(fixture_root)
+                          .in_folder('lib/rag_pipeline/models')
+                          .should.be_in_path('lib/rag_pipeline/models/**')
+
+    expect(cycles.check).to be_empty
+    expect(service_names.check).to be_empty
+    expect(model_paths.check).to be_empty
+  end
+
+  it 'returns structured data for a known negated filename violation' do
+    rule = ArchUnit.files(fixture_root)
+                   .in_folder('lib/rag_pipeline/shared')
+                   .should_not.have_name('leaky.rb')
+
+    expect(rule.check).to contain_exactly(
+      an_instance_of(ArchUnit::FilePatternViolation).and(
+        have_attributes(
+          projected_node: have_attributes(label: 'lib/rag_pipeline/shared/leaky.rb'),
+          negated?: true
+        )
+      )
+    )
+  end
 end
