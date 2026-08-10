@@ -21,6 +21,10 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     )
   end
 
+  def layer_for(path)
+    path[%r{\Alib/rag_pipeline/([^/]+)/}, 1]
+  end
+
   it 'extracts the intended dependencies between application layers' do
     expect(edges).to include_edge(
       source: 'lib/rag_pipeline/services/rag_service.rb',
@@ -85,5 +89,39 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     expect(cached).to equal(edges)
     ArchUnit.clear_graph_cache
     expect(ArchUnit::Extraction.extract_graph(fixture_root)).not_to equal(edges)
+  end
+
+  it 'honors a scoped ignore directive without removing its source node' do
+    source = 'lib/rag_pipeline/shared/legacy_adapter.rb'
+
+    expect(edges).to include(
+      ArchUnit::Edge.new(source: source, target: source, external: false)
+    )
+    expect(edges).not_to include_edge(
+      source: source,
+      target: 'lib/rag_pipeline/services/rag_service.rb',
+      external: false,
+      import_kind: :require_relative
+    )
+  end
+
+  it 'projects concrete dependencies into layer-level evidence' do
+    projected = ArchUnit::Common::Projection.project_edges(edges) do |edge|
+      source_layer = layer_for(edge.source)
+      target_layer = layer_for(edge.target)
+      next if edge.external || edge.source == edge.target || !source_layer || !target_layer
+
+      ArchUnit::MappedEdge.new(source_label: source_layer, target_label: target_layer)
+    end
+
+    api_to_retrieval = projected.find do |edge|
+      edge.source_label == 'api' && edge.target_label == 'retrieval'
+    end
+    shared_to_services = projected.find do |edge|
+      edge.source_label == 'shared' && edge.target_label == 'services'
+    end
+
+    expect(api_to_retrieval.cumulated_edges.length).to eq(2)
+    expect(shared_to_services.cumulated_edges.length).to eq(1)
   end
 end

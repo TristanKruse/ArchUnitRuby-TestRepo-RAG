@@ -22,8 +22,9 @@ Two source files intentionally violate that architecture:
 - `lib/rag_pipeline/shared/leaky.rb` reaches upward into `services`.
 
 Its executable architecture specs cover project discovery, source enumeration, dependency
-extraction, internal/external classification, and both intentional violations. As the ArchUnitRuby
-fluent API grows, this repository will gain fluent rules that report those violations directly.
+extraction, ignore directives, internal/external classification, layer projection, and both
+intentional violations. As the ArchUnitRuby fluent API grows, this repository will gain fluent rules
+that report those violations directly.
 
 Run it next to a checkout named `ArchUnitRuby`:
 
