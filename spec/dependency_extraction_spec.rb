@@ -2,7 +2,13 @@
 
 RSpec.describe 'ArchUnitRuby dependency extraction' do
   let(:fixture_root) { File.expand_path('..', __dir__).tr('\\', '/') }
-  let(:edges) { ArchUnit::Extraction.extract_dependencies(fixture_root) }
+  let(:edges) { ArchUnit::Extraction.extract_graph(fixture_root) }
+
+  around do |example|
+    ArchUnit.clear_graph_cache
+    example.run
+    ArchUnit.clear_graph_cache
+  end
 
   def include_edge(source:, target:, external:, import_kind:)
     include(
@@ -62,5 +68,22 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     expect(edges.flat_map { |edge| [edge.source, edge.target] }).not_to include(
       'coverage/generated.rb', 'pkg/generated.rb', 'tmp/generated.rb', 'vendor/dependency.rb'
     )
+  end
+
+  it 'represents every source and keeps source-target pairs unique' do
+    source_files = ArchUnit::Extraction.enumerate_source_files(fixture_root)
+    self_edge_sources = edges.select { |edge| edge.source == edge.target }.map(&:source)
+    pairs = edges.map { |edge| [edge.source, edge.target] }
+
+    expect(self_edge_sources).to contain_exactly(*source_files)
+    expect(pairs.uniq).to eq(pairs)
+  end
+
+  it 'reuses the graph until the public cache escape hatch is called' do
+    cached = ArchUnit::Extraction.extract_graph(fixture_root)
+
+    expect(cached).to equal(edges)
+    ArchUnit.clear_graph_cache
+    expect(ArchUnit::Extraction.extract_graph(fixture_root)).not_to equal(edges)
   end
 end
