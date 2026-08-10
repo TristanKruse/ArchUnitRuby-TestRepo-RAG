@@ -30,8 +30,9 @@ shared violation/result formatting, the framework-neutral assertion helper, the 
 matcher, a complete named-layer policy, immutable graph querying and layer collapsing, all six graph
 renderers, HTML export, forbidden slice dependencies, PlantUML validation and generation, and both
 intentional violations. It also extracts real class/file metrics, verifies count measurements, and
-calculates the complete LCOM cohesion family over the RAG service. Its fluent rules report and
-assert those violations directly. The intended
+calculates the complete LCOM cohesion family over the RAG service. Dependency-derived distance
+metrics, an architectural zone guard, and a custom class metric exercise the remaining metric API.
+Its fluent rules report and assert those violations directly. The intended
 component architecture is checked in as [`docs/architecture.puml`](docs/architecture.puml) and is
 executed against the real dependency graph on every CI run.
 

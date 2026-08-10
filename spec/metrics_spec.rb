@@ -35,4 +35,34 @@ RSpec.describe 'ArchUnitRuby source metrics' do
     expect(measurements.values_at(:lcom96b, :lcom2))
       .to all(be_within(0.000_001).of(2.0 / 9.0))
   end
+
+  it 'derives distance and coupling values from the real RAG dependency graph' do
+    measurements = ArchUnit::DistanceMetrics::CALCULATIONS.each_key.to_h do |name|
+      [name, service_scope.distance.public_send(name).measure.fetch(0).value]
+    end
+
+    expect(measurements).to include(
+      abstractness: 0.0,
+      instability: 0.625,
+      distance_from_main_sequence: 0.375,
+      coupling_factor: 0.25
+    )
+    expect(measurements[:normalized_distance]).to be_between(0.0, 0.375)
+    expect(service_scope.distance.not_in_zone_of_pain.check).to be_empty
+    expect(service_scope.distance.not_in_zone_of_uselessness.check).to be_empty
+  end
+
+  it 'measures and asserts a custom metric with full RAG ClassInfo evidence' do
+    custom = service_scope.custom_metric(
+      'member count', 'RAG services should remain focused',
+      ->(class_info) { class_info.methods.length + class_info.fields.length }
+    )
+    measurement = custom.measure.fetch(0)
+    passing_rule = custom.should_satisfy(lambda do |value, class_info|
+      value <= 6 && class_info.name.end_with?('RagService')
+    end)
+
+    expect(measurement).to have_attributes(metric_name: 'member count', value: 6)
+    expect(passing_rule.check).to be_empty
+  end
 end
