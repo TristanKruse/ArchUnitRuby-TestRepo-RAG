@@ -1,7 +1,10 @@
 # ArchUnitRuby RAG test repository
 
-A deliberately small retrieval-augmented generation application used to exercise ArchUnitRuby
-against a realistic layered Ruby codebase.
+[![CI](https://github.com/TristanKruse/ArchUnitRuby-TestRepo-RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/TristanKruse/ArchUnitRuby-TestRepo-RAG/actions/workflows/ci.yml)
+
+A deliberately small retrieval-augmented generation application used to exercise
+[ArchUnitRuby](https://github.com/LukasNiessen/ArchUnitRuby) against a realistic layered Ruby
+codebase.
 
 The intended dependency flow is:
 
