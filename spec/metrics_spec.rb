@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'tmpdir'
+require 'stringio'
 
 RSpec.describe 'ArchUnitRuby source metrics' do
   let(:fixture_root) { File.expand_path('..', __dir__).tr('\\', '/') }
@@ -89,6 +90,19 @@ RSpec.describe 'ArchUnitRuby source metrics' do
       have_attributes(
         metric_name: :method_count, value: 3, threshold: 3, comparison: :below
       )
+    )
+  end
+
+  it 'logs structured metric evidence for a failing threshold' do
+    output = StringIO.new
+    rule = service_scope.count.method_count.should_be_below(3)
+    logging = ArchUnit::LoggingOptions.new(level: :debug, io: output)
+
+    expect(rule.check(ArchUnit::CheckOptions.new(logging:)).length).to eq(1)
+    expect(output.string).to include(
+      'log violation:',
+      'log metric: method_count=3 ' \
+      '[lib/rag_pipeline/services/rag_service.rb:RagPipeline::Services::RagService]'
     )
   end
 

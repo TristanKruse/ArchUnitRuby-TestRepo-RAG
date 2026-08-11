@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'stringio'
 require 'tmpdir'
 
 RSpec.describe 'ArchUnitRuby dependency extraction' do
@@ -319,6 +320,47 @@ RSpec.describe 'ArchUnitRuby dependency extraction' do
     expect(cycles.check).to be_empty
     expect(service_names.check).to be_empty
     expect(model_paths.check).to be_empty
+  end
+
+  it 'excludes generated or exceptional paths in the selector call' do
+    rule = ArchUnit.files(fixture_root)
+                   .in_folder(
+                     'lib/rag_pipeline/**',
+                     except: { in_folder: 'lib/rag_pipeline/shared' }
+                   )
+                   .should_not.have_name('leaky.rb')
+    graph = ArchUnit.project_graph(fixture_root).focus_on(
+      'lib/rag_pipeline/**', 0, except: { with_name: 'leaky.rb' }
+    )
+
+    expect(rule.check).to be_empty
+    expect(graph.snapshot.nodes.map(&:label)).not_to include(
+      'lib/rag_pipeline/shared/leaky.rb'
+    )
+  end
+
+  it 'logs one real check to isolated memory and timestamped file sinks' do
+    rule = ArchUnit.files(fixture_root)
+                   .in_folder('lib/rag_pipeline/api')
+                   .with_name('bad_shortcut.rb')
+                   .should_not.depend_on_files
+                   .in_folder('lib/rag_pipeline/retrieval')
+
+    Dir.mktmpdir('rag-archunit-logs') do |directory|
+      output = StringIO.new
+      logging = ArchUnit::LoggingOptions.new(
+        level: :debug, io: output, output_directory: File.join(directory, 'nested')
+      )
+      violations = rule.check(ArchUnit::CheckOptions.new(logging:))
+      files = Dir[File.join(directory, 'nested', 'archunit-*.log')]
+
+      expect(violations.length).to eq(2)
+      expect(output.string).to include(
+        'start check:', 'log progress:', 'log violation:', '(2 violations)'
+      )
+      expect(files.length).to eq(1)
+      expect(File.read(files.fetch(0))).to include('end check:')
+    end
   end
 
   it 'returns structured data for a known negated filename violation' do
