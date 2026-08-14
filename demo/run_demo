@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$stdout.sync = true
+
+ROOT = File.expand_path('..', __dir__)
+SOURCE = File.join(ROOT, 'lib', 'rag_pipeline', 'api', 'bad_shortcut.rb')
+FIXED_SOURCE = File.join(__dir__, 'fixed_bad_shortcut.rb.example')
+SPEC = File.join(__dir__, 'architecture_spec.rb.example')
+
+def section(title)
+  puts
+  puts '=' * 78
+  puts title
+  puts '=' * 78
+end
+
+def pause
+  return if ENV['DEMO_AUTO'] == '1'
+
+  print '\nPress Enter to continue...'
+  $stdin.gets
+end
+
+def run_architecture_test(expected_success:)
+  command = ['bundle', 'exec', 'rspec', SPEC, '--format', 'documentation', '--no-color']
+  puts '$ bundle exec rspec demo/architecture_spec.rb'
+  success = system(*command, chdir: ROOT)
+  return if success == expected_success
+
+  expected = expected_success ? 'pass' : 'fail'
+  abort "Demo stopped: the architecture test was expected to #{expected}."
+end
+
+original_source = File.binread(SOURCE)
+fixed_source = File.binread(FIXED_SOURCE)
+
+begin
+  section 'ArchUnitRuby demo: prevent API code from bypassing the service layer'
+  puts <<~RULE
+    Architecture rule:
+
+      ArchUnit.files(project_root)
+              .in_folder('lib/rag_pipeline/api')
+              .should_not.depend_on_files
+              .in_folder('lib/rag_pipeline/retrieval')
+  RULE
+  pause
+
+  section '1/3 — Run the rule against the intentionally broken implementation'
+  run_architecture_test(expected_success: false)
+  pause
+
+  section '2/3 — Fix the dependency direction'
+  puts 'Before: API requires retrieval/embedder and retrieval/vector_store directly.'
+  puts 'After:  API requires models/query and services/rag_service instead.'
+  File.binwrite(SOURCE, fixed_source)
+  puts "Updated #{SOURCE.delete_prefix("#{ROOT}/")}"
+  pause
+
+  section '3/3 — Run the unchanged architecture rule again'
+  run_architecture_test(expected_success: true)
+
+  section 'Result'
+  puts 'The architecture violation was detected, fixed, and verified end to end.'
+ensure
+  File.binwrite(SOURCE, original_source)
+  puts
+  puts 'Restored the repository to its original state.'
+end

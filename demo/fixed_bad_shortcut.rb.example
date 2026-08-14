@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+require_relative '../models/query'
+require_relative '../services/rag_service'
+
+module RagPipeline
+  module Api
+    # Routes requests through the service layer instead of bypassing it.
+    class BadShortcut
+      def initialize(service: Services::RagService.new)
+        @service = service
+      end
+
+      def call(text)
+        @service.query(Models::Query.new(text:))
+      end
+    end
+  end
+end

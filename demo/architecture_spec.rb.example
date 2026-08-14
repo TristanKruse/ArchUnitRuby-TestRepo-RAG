@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require_relative '../spec/spec_helper'
+
+RSpec.describe 'RAG dependency architecture' do
+  it 'keeps the API layer from bypassing services and reaching into retrieval' do
+    project_root = File.expand_path('..', __dir__).tr('\\', '/')
+    rule = ArchUnit.files(project_root)
+                   .in_folder('lib/rag_pipeline/api')
+                   .should_not.depend_on_files
+                   .in_folder('lib/rag_pipeline/retrieval')
+
+    expect(rule).to pass
+  end
+end

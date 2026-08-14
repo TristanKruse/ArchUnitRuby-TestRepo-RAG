@@ -46,5 +46,20 @@ bundle install
 bundle exec rake
 ```
 
+## Two-minute red-to-green demo
+
+The [`demo`](demo/README.md) directory contains a repeatable prototype walkthrough. It runs one
+fluent architecture rule against the deliberately broken API shortcut, reports the forbidden
+`api -> retrieval` dependencies, changes the implementation to use the service layer, and reruns
+the unchanged rule successfully. A captioned [37-second video](demo/archunitruby-red-green-demo.mp4)
+is included for asynchronous presentation:
+
+```bash
+bundle exec ruby demo/run_demo
+```
+
+The script works in an isolated edit-and-restore cycle, so the repository returns to its original
+state after the demonstration.
+
 CI checks the fixture against the current ArchUnitRuby `main` branch on Ruby 3.3 and 4.0, including
 Windows.
