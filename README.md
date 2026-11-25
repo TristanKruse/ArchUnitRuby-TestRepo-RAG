@@ -3,7 +3,7 @@
 [![CI](https://github.com/TristanKruse/ArchUnitRuby-TestRepo-RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/TristanKruse/ArchUnitRuby-TestRepo-RAG/actions/workflows/ci.yml)
 
 A deliberately small retrieval-augmented generation application used to exercise
-[ArchUnitRuby](https://github.com/LukasNiessen/ArchUnitRuby) against a realistic layered Ruby
+[ArchUnitRuby](https://github.com/dragonsec-ai/ArchUnitRuby) against a realistic layered Ruby
 codebase.
 
 The intended dependency flow is:
@@ -39,7 +39,9 @@ The intended
 component architecture is checked in as [`docs/architecture.puml`](docs/architecture.puml) and is
 executed against the real dependency graph on every CI run.
 
-Run it next to a checkout named `ArchUnitRuby`:
+From this repository’s root, with Ruby 3.3 or newer. Bundler installs the pinned
+[ArchUnitRuby 1.1.0 gem](https://rubygems.org/gems/archunit/versions/1.1.0) from RubyGems.
+You don’t need a second checkout.
 
 ```bash
 bundle install
@@ -61,5 +63,9 @@ bundle exec ruby demo/run_demo
 The script works in an isolated edit-and-restore cycle, so the repository returns to its original
 state after the demonstration.
 
-CI checks the fixture against the current ArchUnitRuby `main` branch on Ruby 3.3 and 4.0, including
-Windows.
+CI checks the published bundle and the demo on Ruby 3.3 and 4.0, including Windows.
+The [library’s CI](https://github.com/dragonsec-ai/ArchUnitRuby/actions/workflows/ci.yml) also runs
+the fixture against the candidate checkout. For local development, explicitly set
+`ARCHUNIT_RUBY_PATH` to your library checkout for both installation and test commands. Bundler
+will rewrite the lockfile for that local override; use a disposable fixture checkout and don’t
+commit the resulting path lock.

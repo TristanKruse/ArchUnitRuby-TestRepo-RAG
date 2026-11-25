@@ -1,12 +1,4 @@
 PATH
-  remote: ../ArchUnitRuby
-  specs:
-    archunit (0.0.1)
-      csv (>= 3.3, < 4.0)
-      json (>= 2.7, < 3.0)
-      prism (>= 1.0, < 2.0)
-
-PATH
   remote: .
   specs:
     archunit_ruby_test_repo_rag (0.1.0)
@@ -14,6 +6,10 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    archunit (1.1.0)
+      csv (>= 3.3, < 4.0)
+      json (>= 2.7, < 3.0)
+      prism (>= 1.0, < 2.0)
     ast (2.4.3)
     csv (3.3.6)
     diff-lcs (1.6.2)
@@ -66,14 +62,14 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  archunit!
+  archunit (= 1.1.0)
   archunit_ruby_test_repo_rag!
   rake (~> 13.2)
   rspec (~> 3.13)
   rubocop (~> 1.80)
 
 CHECKSUMS
-  archunit (0.0.1)
+  archunit (1.1.0) sha256=8d6fa31dfb22ec7b79f83bbbf00a3ddbb40095d7b4a807f0242ced8893c76b72
   archunit_ruby_test_repo_rag (0.1.0)
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   csv (3.3.6) sha256=aba61e7e507a66f03d45cb1f3c4b6359861c3504038b422962875dce099e4456
