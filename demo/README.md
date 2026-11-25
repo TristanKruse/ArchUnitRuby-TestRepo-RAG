@@ -12,9 +12,11 @@ before: api -> retrieval      forbidden
 after:  api -> services       allowed
 ```
 
-Run the complete interactive walkthrough from the repository root:
+Run the complete interactive walkthrough from the repository root (Ruby 3.3 or newer).
+Bundler installs ArchUnitRuby 1.1.0 from RubyGems; no sibling clone is required:
 
 ```bash
+bundle install
 bundle exec ruby demo/run_demo
 ```
 

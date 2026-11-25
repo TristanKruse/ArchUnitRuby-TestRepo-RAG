@@ -33,12 +33,6 @@ jobs:
         with:
           path: ArchUnitRuby-TestRepo-RAG
 
-      - name: Check out ArchUnitRuby
-        uses: actions/checkout@v7
-        with:
-          repository: LukasNiessen/ArchUnitRuby
-          path: ArchUnitRuby
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -49,3 +43,9 @@ jobs:
       - name: Run application, architecture, and lint tests
         working-directory: ArchUnitRuby-TestRepo-RAG
         run: bundle exec rake
+
+      - name: Verify red-to-green demo with the published gem
+        working-directory: ArchUnitRuby-TestRepo-RAG
+        env:
+          DEMO_AUTO: '1'
+        run: bundle exec ruby demo/run_demo

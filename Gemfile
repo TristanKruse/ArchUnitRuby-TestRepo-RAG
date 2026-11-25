@@ -7,7 +7,7 @@ gemspec
 if ENV['ARCHUNIT_RUBY_PATH']
   gem 'archunit', path: ENV.fetch('ARCHUNIT_RUBY_PATH')
 else
-  gem 'archunit', path: '../ArchUnitRuby'
+  gem 'archunit', '1.1.0'
 end
 
 gem 'rake', '~> 13.2'
